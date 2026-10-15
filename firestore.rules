@@ -1,0 +1,41 @@
+rules_version = '2';
+
+// App data lives under users/{uid}: a signed-in user can read and write only
+// their own subtree. The shared training corpus lives under /shared and is
+// readable by any signed-in user; clients can never write to it (admin only).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /sharedTrainingExamples/{exampleId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /users/{userId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      allow read, write: if isOwner();
+
+      match /profiles/{profileId} {
+        allow read, write: if isOwner();
+      }
+
+      match /analyses/{analysisId} {
+        allow read, write: if isOwner();
+      }
+
+      match /trainingExamples/{exampleId} {
+        allow read, write: if isOwner();
+      }
+
+      match /labelCandidates/{candidateId} {
+        allow read, write: if isOwner();
+      }
+
+      match /detectorCheckRuns/{runId} {
+        allow read, write: if isOwner();
+      }
+    }
+  }
+}
